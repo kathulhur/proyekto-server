@@ -10,7 +10,7 @@ export function AddClientModal() {
     const [ phone, setPhone ] = useState('');
 
     const [ addClient ] = useMutation(ADD_CLIENT, {
-        variables: { name, email, phone},
+        variables: { name, email, phone },
         update(cache, { data: { addClient }}) {
             const { clients } = cache.readQuery({
                 query: GET_CLIENTS
@@ -29,7 +29,7 @@ export function AddClientModal() {
             return alert('Please fill in all fields');
         }
 
-        addClient(name, email, phone);
+        addClient();
 
         setName('')
         setEmail('')

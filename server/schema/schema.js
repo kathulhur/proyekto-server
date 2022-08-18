@@ -21,10 +21,11 @@ const ProjectType = new GraphQLObjectType({
     name: 'Project',
     fields: () => ({
         id: { type: GraphQLID },
+        clientId: { type: GraphQLID },
         client: { 
             type: ClientType,
             resolve: (parentValue, args) => {
-                return Client.find(parentValue.clientId);
+                return Client.findById(parentValue.clientId);
             }
         },
         name: { type: GraphQLString },
@@ -92,6 +93,12 @@ const mutation = new GraphQLObjectType({
                 id: { type: new GraphQLNonNull(GraphQLID) }
             },
             resolve(parent, args){
+                Project.find({ clientId: args.id }).then(projects => {
+                    projects.forEach(project => {
+                        project.remove();
+                    })
+                });
+
                 return Client.findByIdAndRemove(args.id)
             }
         },

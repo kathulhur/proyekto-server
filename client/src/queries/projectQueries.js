@@ -8,6 +8,7 @@ const GET_PROJECT = gql`
             name
             description
             status
+            clientId
             client {
                 id
                 name
@@ -26,6 +27,7 @@ const GET_PROJECTS = gql`
             name
             description
             status
+            clientId
         }
     }
 `;
