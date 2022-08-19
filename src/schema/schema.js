@@ -1,10 +1,19 @@
 // Mongoose Models
 const Project = require('../models/Project');
 const Client = require('../models/Client');
-
+const User = require('../models/User');
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLSchema, GraphQLList, GraphQLNonNull, GraphQLEnumType } = require('graphql');
 const { model } = require('mongoose');
 
+
+const UserType = new GraphQLObjectType({
+    name: 'User',
+    fields: () => ({ // function that returns an object
+        id: { type: GraphQLID },
+        username: { type: GraphQLString },
+        password: { type: GraphQLString }
+    })
+});
 
 // Client Type
 const ClientType = new GraphQLObjectType({
@@ -37,6 +46,19 @@ const ProjectType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     fields: {
+        user: {
+            type: UserType,
+            args: { id: { type: GraphQLID } },
+            resolve(parentValue, args) {
+                return User.findById(args.id);
+            }
+        },
+        users: {
+            type: new GraphQLList(UserType),
+            resolve(parentValue, args) {
+                return User.find({});
+            }
+        },
         client: {
             type: ClientType,
             args: { id: { type: GraphQLID }},
@@ -70,6 +92,39 @@ const RootQuery = new GraphQLObjectType({
 const mutation = new GraphQLObjectType({
     name: 'Mutation',
     fields: {
+        addUser: {
+            type: UserType,
+            args: {
+                username: { type: new GraphQLNonNull(GraphQLString) },
+                password: { type: new GraphQLNonNull(GraphQLString) }
+            },
+            resolve(parentValue, { username, password }) {
+                return new User({ username, password }).save();
+            }
+        },
+        deleteUser: {
+            type: UserType,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLID) }
+            },
+            resolve(parentValue, { id }) {
+                return User.findByIdAndDelete(id);
+            }
+        },
+        updateUser: {
+            type: UserType,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLID) },
+                username: { type: GraphQLString },
+                password: { type: GraphQLString }
+            },
+            resolve(parentValue, { id, username, password }) {
+                return User.findByIdAndUpdate(id, { $set: {
+                    username,
+                    password
+                }}, { new: true });
+            }
+        },
         addClient: {
             type: ClientType,
             args: {
