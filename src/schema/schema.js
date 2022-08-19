@@ -142,6 +142,22 @@ const mutation = new GraphQLObjectType({
                 return client.save();
             }
         },
+        updateClient: {
+            type: ClientType,
+            args: {
+                id: { type: new GraphQLNonNull(GraphQLID) },
+                name: { type: GraphQLString },
+                email: { type: GraphQLString },
+                phone: { type: GraphQLString }
+            },
+            resolve(parentValue, args) {
+                return Client.findByIdAndUpdate(args.id, { $set: {
+                    name: args.name,
+                    email: args.email,
+                    phone: args.phone
+                }}, { new: true });
+            }
+        },
         deleteClient: {
             type: ClientType,
             args: {
