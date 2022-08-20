@@ -100,8 +100,8 @@ const mutation = new GraphQLObjectType({
                 password: { type: new GraphQLNonNull(GraphQLString) },
                 secretCode: { type: new GraphQLNonNull(GraphQLString) }
             },
-            resolve(parentValue, { username, password }) {
-                return new User({ username, password }).save();
+            resolve(parentValue, { username, password, secretCode }) {
+                return new User({ username, password, secretCode }).save();
             }
         },
         deleteUser: {
@@ -118,12 +118,14 @@ const mutation = new GraphQLObjectType({
             args: {
                 id: { type: new GraphQLNonNull(GraphQLID) },
                 username: { type: GraphQLString },
-                password: { type: GraphQLString }
+                password: { type: GraphQLString },
+                secretCode: { type: GraphQLString }
             },
             resolve(parentValue, { id, username, password }) {
                 return User.findByIdAndUpdate(id, { $set: {
                     username,
-                    password
+                    password,
+                    secretCode
                 }}, { new: true });
             }
         },
