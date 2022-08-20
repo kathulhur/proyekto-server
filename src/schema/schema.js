@@ -1,9 +1,20 @@
 // Mongoose Models
+const bcrypt = require('bcrypt');
 const Project = require('../models/Project');
 const Client = require('../models/Client');
 const User = require('../models/User');
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLSchema, GraphQLList, GraphQLNonNull, GraphQLEnumType } = require('graphql');
 const { model } = require('mongoose');
+const jwt = require('jsonwebtoken');
+const loginResolver = require('../resolvers/userResolver/loginResolver');
+const addUserResolver = require('../resolvers/userResolver/addUserResolver');
+
+const TokenType = new GraphQLObjectType({
+    name: 'Token',
+    fields: () => ({
+        token: { type: GraphQLString },
+    })
+});
 
 
 const UserType = new GraphQLObjectType({
@@ -93,6 +104,14 @@ const RootQuery = new GraphQLObjectType({
 const mutation = new GraphQLObjectType({
     name: 'Mutation',
     fields: {
+        login: {
+            type: TokenType,
+            args: {
+                username: { type: new GraphQLNonNull(GraphQLString) },
+                password: { type: new GraphQLNonNull(GraphQLString) }
+            },
+            resolve: loginResolver
+        },
         addUser: {
             type: UserType,
             args: {
@@ -100,9 +119,7 @@ const mutation = new GraphQLObjectType({
                 password: { type: new GraphQLNonNull(GraphQLString) },
                 secretCode: { type: new GraphQLNonNull(GraphQLString) }
             },
-            resolve(parentValue, { username, password, secretCode }) {
-                return new User({ username, password, secretCode }).save();
-            }
+            resolve: addUserResolver
         },
         deleteUser: {
             type: UserType,
