@@ -121,7 +121,7 @@ const mutation = new GraphQLObjectType({
                 password: { type: GraphQLString },
                 secretCode: { type: GraphQLString }
             },
-            resolve(parentValue, { id, username, password }) {
+            resolve(parentValue, { id, username, password, secretCode }) {
                 return User.findByIdAndUpdate(id, { $set: {
                     username,
                     password,
