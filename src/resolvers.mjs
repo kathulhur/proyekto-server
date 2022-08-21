@@ -9,11 +9,15 @@ const isAuthenticated = (parent, args, { user }) => {
     return user ? skip : new ForbiddenError('Not authenticated as user.');
 }
 
+const isAdmin = (parent, args, { user }) => {
+    return user && user.role === 'ADMIN' ? skip : new ForbiddenError('Not authenticated as admin.');
+}
+
 
 
 const createToken = async (loggedUser, secret, expiresIn) => {
-    const { id, username } = loggedUser;
-    return await jwt.sign({ id, username }, secret, { expiresIn });
+    const { id, username, role } = loggedUser;
+    return await jwt.sign({ id, username, role }, secret, { expiresIn });
 }
 
 const resolvers = {
@@ -26,7 +30,7 @@ const resolvers = {
     Query: {
         googleAuthApiKey: () => process.env.GOOGLE_AUTH_API_KEY,
         users: combineResolvers(
-            isAuthenticated,
+            isAdmin,
             async (parent, args, { models }) => await models.User.find(),
         ),
         user: combineResolvers(
@@ -35,7 +39,7 @@ const resolvers = {
         ),
         clients: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => await models.Client.find(),
+            async (parent, args, { models, user }) => await models.Client.find({ userId: user.id }),
         ),
         client: combineResolvers(
             isAuthenticated,
@@ -43,7 +47,7 @@ const resolvers = {
         ),
         projects: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => await models.Project.find()
+            async (parent, args, { models, user }) => await models.Project.find({ userId: user.id })
         ),
         project: combineResolvers(
             isAuthenticated,
@@ -64,23 +68,25 @@ const resolvers = {
         }),
         createClient: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => {
+            async (parent, args, { models, user}) => {
             const client = new models.Client({
                 name: args.name,
                 email: args.email,
-                phone: args.phone
+                phone: args.phone,
+                userId: user.id
             });
             await client.save();
             return client;
         }),
         createProject: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => {
+            async (parent, args, { models, user}) => {
             const project = new models.Project({
                 clientId: args.clientId,
                 name: args.name,
                 description: args.description,
-                status: args.status
+                status: args.status,
+                userId: user.id
             });
             await project.save();
             return project;
@@ -152,6 +158,7 @@ const resolvers = {
             if (!isValid) {
                 throw new Error('Invalid password');
             }
+
             return { 
                 token: createToken(loggedUser, secret, '1hr'),
                 user: loggedUser
@@ -163,7 +170,6 @@ const resolvers = {
                 password: await bcrypt.hash(args.password, 10),
                 secretCode: args.secretCode
             });
-
             return { 
                 token: createToken(createdUser, secret, '1hr'),
                 user: createdUser

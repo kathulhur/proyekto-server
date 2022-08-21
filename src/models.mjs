@@ -9,6 +9,10 @@ const ClientSchema = new mongoose.Schema({
     },
     phone: {
         type: String
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }
 });
 
@@ -26,12 +30,18 @@ const ProjectSchema = new mongoose.Schema({
     clientId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Client'
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }
+    
 });
 
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true },
     password: { type: String, required: true },
+    role: { type: String, required: true, enum: ['ADMIN', 'USER'], default: 'USER' },
     secretCode: { type: String, required: true },
     twoFactorAuthEnabled: { type: Boolean, default: false },
 });

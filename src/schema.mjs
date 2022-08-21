@@ -20,6 +20,7 @@ const schema = gql`
         id: ID!
         username: String
         password: String
+        role: Role
         secretCode: String
         twoFactorAuthEnabled: Boolean
     }
@@ -29,6 +30,7 @@ const schema = gql`
         name: String
         email: String
         phone: String
+        userId: ID
     }
 
     type Project {
@@ -38,12 +40,18 @@ const schema = gql`
         name: String
         description: String
         status: Status
+        userId: ID
     }
 
     enum Status {
         NEW,
         PROGRESS,
         COMPLETED
+    }
+
+    enum Role {
+        ADMIN,
+        USER
     }
 
     type AuthPayload {
