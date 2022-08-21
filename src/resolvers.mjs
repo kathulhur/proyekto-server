@@ -1,5 +1,15 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { skip } from 'graphql-resolvers';
+import { ForbiddenError } from 'apollo-server-express';
+import { combineResolvers } from 'graphql-resolvers';
+
+
+const isAuthenticated = (parent, args, { user }) => {
+    return user ? skip : new ForbiddenError('Not authenticated as user.');
+}
+
+
 
 const createToken = async (loggedUser, secret, expiresIn) => {
     const { id, username } = loggedUser;
@@ -14,15 +24,35 @@ const resolvers = {
         }
     },
     Query: {
-        users: async (parent, args, { models }) => await models.User.find(),
-        user: async (parent, args, { models }) => await models.User.findById(args.id),
-        clients: async (parent, args, { models }) => await models.Client.find(),
-        client: async (parent, args, { models }) => await models.Client.findById(args.id),
-        projects: async (parent, args, { models }) => await models.Project.find(),
-        project: async (parent, args, { models }) => await models.Project.findById(args.id),
+        users: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => await models.User.find(),
+        ),
+        user: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => await models.User.findById(args.id)
+        ),
+        clients: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => await models.Client.find(),
+        ),
+        client: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => await models.Client.findById(args.id)
+        ),
+        projects: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => await models.Project.find()
+        ),
+        project: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => await models.Project.findById(args.id)
+        )
     },
     Mutation: {
-        createUser: async (parent, args, { models }) => {
+        createUser: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const user = new models.User({
                 username: args.username,
                 password: args.password,
@@ -30,8 +60,10 @@ const resolvers = {
             });
             await user.save();
             return user;
-        },
-        createClient: async (parent, args, { models }) => {
+        }),
+        createClient: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const client = new models.Client({
                 name: args.name,
                 email: args.email,
@@ -39,8 +71,10 @@ const resolvers = {
             });
             await client.save();
             return client;
-        },
-        createProject: async (parent, args, { models }) => {
+        }),
+        createProject: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const project = new models.Project({
                 clientId: args.clientId,
                 name: args.name,
@@ -49,8 +83,10 @@ const resolvers = {
             });
             await project.save();
             return project;
-        },
-        editUser: async (parent, args, { models }) => {
+        }),
+        editUser: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const user = await models.User.findByIdAndUpdate(args.id, { $set: {
                 username: args.username,
                 password: args.password,
@@ -59,8 +95,10 @@ const resolvers = {
             }});
 
             return user;
-        },
-        editClient: async (parent, args, { models }) => {
+        }),
+        editClient: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const client = await models.Client.findByIdAndUpdate(args.id, {
                 name: args.name,
                 email: args.email,
@@ -68,8 +106,10 @@ const resolvers = {
             }); 
 
             return client;
-        },
-        editProject: async (parent, args, { models }) => {
+        }),
+        editProject: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const project = await models.Project.findByIdAndUpdate(args.id, { $set: {
                 clientId: args.clientId,
                 name: args.name,
@@ -79,22 +119,29 @@ const resolvers = {
 
 
             return project;
-        },
-        deleteUser: async (parent, args, { models }) => {
+        }),
+        deleteUser: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const user = await models.User.findById(args.id);
             await user.remove();
             return user;
-        },
-        deleteClient: async (parent, args, { models }) => {
+        }),
+        deleteClient: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const client = await models.Client.findById(args.id);
+            await models.Project.deleteMany({ clientId: args.id });
             await client.remove();
             return client;
-        },
-        deleteProject: async (parent, args, { models }) => {
+        }),
+        deleteProject: combineResolvers(
+            isAuthenticated,
+            async (parent, args, { models }) => {
             const project = await models.Project.findById(args.id);
             await project.remove();
             return project;
-        },
+        }),
         signIn: async (parent, args, { user, models, secret }) => {
             const loggedUser = await models.User.findOne({ username: args.username });
             if (!loggedUser) {

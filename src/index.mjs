@@ -1,12 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { ApolloServer } from 'apollo-server-express';
+import { ApolloServer, AuthenticationError } from 'apollo-server-express';
 import resolvers from './resolvers.mjs';
 import schema from './schema.mjs';
 import models from './models.mjs';
 import connectDb from './config/db.mjs';
 import jwt from 'jsonwebtoken';
+
+
 dotenv.config()
 
 await connectDb();
@@ -17,7 +19,7 @@ const port = process.env.PORT || 5000;
 const getUser = async req => {
   const token = req.headers.authorization;
 
-  if (token && token != 'null') {
+  if (token) {
     try {
       const token = req.headers.authorization.split(' ')[1].replace(/^"(.*)"$/, '$1');
       const verifiedToken = jwt.verify(token, process.env.APP_SECRET);
@@ -25,7 +27,7 @@ const getUser = async req => {
       return verifiedToken;
     } catch (e) {
       console.log(e)
-      throw new Error('Invalid Token');
+      throw new AuthenticationError('Your session expired. Sign in again.');
     }
   }
 };
