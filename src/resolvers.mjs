@@ -24,6 +24,7 @@ const resolvers = {
         }
     },
     Query: {
+        googleAuthApiKey: () => process.env.GOOGLE_AUTH_API_KEY,
         users: combineResolvers(
             isAuthenticated,
             async (parent, args, { models }) => await models.User.find(),

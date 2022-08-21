@@ -9,6 +9,7 @@ const schema = gql`
         clients: [Client],
         project(id: ID!): Project,
         projects: [Project]
+        googleAuthApiKey: String
     }
 
     type Token {
