@@ -15,6 +15,10 @@ const isAdmin = (parent, args, { user }) => {
 
 
 
+
+
+
+
 const createToken = async (loggedUser, secret, expiresIn) => {
     const { id, username, role } = loggedUser;
     return await jwt.sign({ id, username, role }, secret, { expiresIn });
@@ -29,6 +33,7 @@ const resolvers = {
     },
     Query: {
         googleAuthApiKey: () => process.env.GOOGLE_AUTH_API_KEY,
+        appName: () => process.env.APP_NAME,
         users: combineResolvers(
             isAdmin,
             async (parent, args, { models }) => await models.User.find(),
@@ -55,17 +60,24 @@ const resolvers = {
         )
     },
     Mutation: {
-        createUser: combineResolvers(
-            isAuthenticated,
+        validateTwoFactorAuth: async (parent, args, { appName }) => {
+            const { code, secretCode } = args;
+            const isValid = await validateTwoFactorAuth(code, secretCode);
+            return isValid;
+        },
+        createUser: 
             async (parent, args, { models }) => {
-            const user = new models.User({
-                username: args.username,
-                password: args.password,
-                secretCode: args.secretCode
-            });
-            await user.save();
-            return user;
-        }),
+
+                const hashedPassword = await bcrypt.hash(args.password, 10); 
+                const user = new models.User({
+                    username: args.username,
+                    password: hashedPassword,
+                    secretCode: args.secretCode,
+                    twoFactorAuthQrLink: args.twoFactorAuthQrLink
+                });
+                await user.save();
+                return user;
+            },
         createClient: combineResolvers(
             isAuthenticated,
             async (parent, args, { models, user}) => {
@@ -98,8 +110,9 @@ const resolvers = {
                 username: args.username,
                 password: args.password,
                 secretCode: args.secretCode,
-                twoFactorAuthEnabled: args.twoFactorAuthEnabled
-            }});
+                twoFactorAuthEnabled: args.twoFactorAuthEnabled,
+                role: args.role,
+            }}, { new: true });
 
             return user;
         }),
@@ -163,20 +176,11 @@ const resolvers = {
                 token: createToken(loggedUser, secret, '1hr'),
                 user: loggedUser
             };
-        },
-        signUp: async (parent, args, { user, models, secret }) => {
-            const createdUser = await models.User.create({
-                username: args.username,
-                password: await bcrypt.hash(args.password, 10),
-                secretCode: args.secretCode
-            });
-            return { 
-                token: createToken(createdUser, secret, '1hr'),
-                user: createdUser
-            };
         }
     }
 };
+
+
 
 
 export default resolvers;

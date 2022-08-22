@@ -10,6 +10,7 @@ const schema = gql`
         project(id: ID!): Project,
         projects: [Project]
         googleAuthApiKey: String
+        appName: String
     }
 
     type Token {
@@ -23,6 +24,7 @@ const schema = gql`
         role: Role
         secretCode: String
         twoFactorAuthEnabled: Boolean
+        twoFactorAuthQrLink: String
     }
 
     type Client {
@@ -61,18 +63,17 @@ const schema = gql`
 
 
     type Mutation {
-        createUser(username: String!, password: String!, secretCode: String!): User
+        createUser(username: String!, password: String!, secretCode: String!, twoFactorAuthQrLink: String!): User
         createClient(name: String!, email: String!, phone: String!): Client
         createProject(clientId: ID!, name: String!, description: String!, status: Status!): Project
-        editUser(id: ID!, username: String, password: String, secretCode: String, twoFactorAuthEnabled: Boolean): User
+        editUser(id: ID!, username: String, password: String, secretCode: String, twoFactorAuthEnabled: Boolean, role: Role): User
         editClient(id: ID!, name: String, email: String, phone: String): Client
         editProject(id: ID!, clientId: ID, name: String, description: String, status: Status): Project
         deleteUser(id: ID!): User
         deleteClient(id: ID!): Client
         deleteProject(id: ID!): Project
         signIn(username: String!, password: String!): AuthPayload!
-        signUp(username: String!, password: String!, secretCode: String!): AuthPayload!
-
+        validateTwoFactorAuth(code: String!, secretCode: String!): String
     }
 
 `;

@@ -44,6 +44,7 @@ const UserSchema = new mongoose.Schema({
     role: { type: String, required: true, enum: ['ADMIN', 'USER'], default: 'USER' },
     secretCode: { type: String, required: true },
     twoFactorAuthEnabled: { type: Boolean, default: false },
+    twoFactorAuthQrLink: { type: String, default: null }
 });
 
 

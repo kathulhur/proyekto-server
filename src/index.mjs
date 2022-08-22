@@ -18,7 +18,7 @@ const port = process.env.PORT || 5000;
 
 const getUser = async req => {
   const token = req.headers.authorization;
-
+  
   if (token) {
     try {
       const token = req.headers.authorization.split(' ')[1].replace(/^"(.*)"$/, '$1');
@@ -40,7 +40,8 @@ const server = new ApolloServer({
             return {
                 models,
                 user,
-                secret: process.env.APP_SECRET
+                secret: process.env.APP_SECRET,
+                appName: process.env.APP_NAME,
             };
         }    
     });
