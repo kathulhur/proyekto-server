@@ -35,7 +35,6 @@ This is the server side implementation of PROYEKTO, a project management app. Th
 
 <!-- ROADMAP -->
 ## Roadmap
-- [ ] Two-factor authentication UI
 - [ ] Typescript Migration
 
 See the [open issues](https://github.com/kathulhur/proyekto-server/issues) for a full list of proposed features (and known issues).
