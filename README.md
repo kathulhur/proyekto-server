@@ -21,7 +21,9 @@
 
 ### Built With
 
-* [Nest.js](https://nestjs.com/)
+* [expressjs](https://expressjs.com/)
+* [ApolloServer](https://www.apollographql.com/docs/apollo-server/)
+* [Mongodb](https://www.mongodb.com/)
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
