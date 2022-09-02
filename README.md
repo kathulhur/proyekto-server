@@ -1,4 +1,4 @@
-# proyekto-server
+
 
 
 <div id="top"></div>
@@ -19,6 +19,9 @@
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
+# proyekto-server
+![proyekto screenshot](https://user-images.githubusercontent.com/61414067/188045724-cac607cb-f81a-458f-84ef-69e1e2c616e8.png)
+
 ### Built With
 
 * [expressjs](https://expressjs.com/)
@@ -26,7 +29,11 @@
 * [Mongodb](https://www.mongodb.com/)
 
 
+
+
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+
 
 ## Description
 This is the server side implementation of PROYEKTO, a project management app. This is built using express, and Apollo Server.
