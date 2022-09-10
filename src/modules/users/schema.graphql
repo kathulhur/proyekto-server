@@ -7,11 +7,11 @@ extend type Query {
 }
 
 type Mutation {
-    createUser(username: String!, password: String!, secretCode: String!, twoFactorAuthQrLink: String!): User
+    createUser(username: String!, password: String!): User
     editUser(id: ID!, username: String, password: String, secretCode: String, twoFactorAuthEnabled: Boolean, role: Role): User
     deleteUser(id: ID!): User
-    signIn(username: String!, password: String!): AuthPayload!
-    validateTwoFactorAuth(code: String!, secretCode: String!): String
+    signIn(username: String!, password: String!): SignInResponse!
+    validateCode(userId: ID!, code: String!): ValidateCodeResponse!
 }
 
 type User {
@@ -29,12 +29,43 @@ enum Role {
     USER
 }
 
-type AuthPayload {
-    token: String!
-    user: User!
-}
-
 
 type Token {
     token: String!
+}
+
+
+type SignInResponse implements MutationResponse {
+    "Similar to HTTP status code, represents the status of the mutation"
+    code: Int!
+    "Indicates whether the mutation was successful"
+    success: Boolean!
+    "Human-readable message for the UI"
+    message: String!
+    "The token for the user"
+    token: String
+    "The user"
+    user: User
+}
+
+type ValidateCodeResponse implements MutationResponse {
+    "Similar to HTTP status code, represents the status of the mutation"
+    code: Int!
+    "Indicates whether the mutation was successful"
+    success: Boolean!
+    "Human-readable message for the UI"
+    message: String!
+    "The token for the user"
+    token: String
+    "The user"
+    user: User
+}
+
+interface MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
 }
