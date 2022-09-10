@@ -1,5 +1,6 @@
-import colors from 'colors';
 // setup mongodb connection
+import colors from 'colors';
+colors.enable();
 import mongoose from 'mongoose';
 
 const connectDB = async () => {

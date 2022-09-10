@@ -14,23 +14,12 @@ const isAdmin = (parent, args, { user }) => {
 }
 
 
-
-
-
-
-
 const createToken = async (loggedUser, secret, expiresIn) => {
     const { id, username, role } = loggedUser;
     return await jwt.sign({ id, username, role }, secret, { expiresIn });
 }
 
 const resolvers = {
-    Project: {
-        client: async (project, args, { models }) => {
-            const client = await models.Client.findById(project.clientId);
-            return client;
-        }
-    },
     Query: {
         googleAuthApiKey: () => process.env.GOOGLE_AUTH_API_KEY,
         appName: () => process.env.APP_NAME,
@@ -42,22 +31,6 @@ const resolvers = {
             isAuthenticated,
             async (parent, args, { models }) => await models.User.findById(args.id)
         ),
-        clients: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models, user }) => await models.Client.find({ userId: user.id }),
-        ),
-        client: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models }) => await models.Client.findById(args.id)
-        ),
-        projects: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models, user }) => await models.Project.find({ userId: user.id })
-        ),
-        project: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models }) => await models.Project.findById(args.id)
-        )
     },
     Mutation: {
         validateTwoFactorAuth: async (parent, args, { appName }) => {
@@ -78,31 +51,6 @@ const resolvers = {
                 await user.save();
                 return user;
             },
-        createClient: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models, user}) => {
-            const client = new models.Client({
-                name: args.name,
-                email: args.email,
-                phone: args.phone,
-                userId: user.id
-            });
-            await client.save();
-            return client;
-        }),
-        createProject: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models, user}) => {
-            const project = new models.Project({
-                clientId: args.clientId,
-                name: args.name,
-                description: args.description,
-                status: args.status,
-                userId: user.id
-            });
-            await project.save();
-            return project;
-        }),
         editUser: combineResolvers(
             isAuthenticated,
             async (parent, args, { models }) => {
@@ -116,30 +64,6 @@ const resolvers = {
 
             return user;
         }),
-        editClient: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models }) => {
-            const client = await models.Client.findByIdAndUpdate(args.id, {
-                name: args.name,
-                email: args.email,
-                phone: args.phone
-            }); 
-
-            return client;
-        }),
-        editProject: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models }) => {
-            const project = await models.Project.findByIdAndUpdate(args.id, { $set: {
-                clientId: args.clientId,
-                name: args.name,
-                description: args.description,
-                status: args.status
-            }});
-
-
-            return project;
-        }),
         deleteUser: combineResolvers(
             isAuthenticated,
             async (parent, args, { models }) => {
@@ -147,22 +71,7 @@ const resolvers = {
             await user.remove();
             return user;
         }),
-        deleteClient: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models }) => {
-            const client = await models.Client.findById(args.id);
-            await models.Project.deleteMany({ clientId: args.id });
-            await client.remove();
-            return client;
-        }),
-        deleteProject: combineResolvers(
-            isAuthenticated,
-            async (parent, args, { models }) => {
-            const project = await models.Project.findById(args.id);
-            await project.remove();
-            return project;
-        }),
-        signIn: async (parent, args, { user, models, secret }) => {
+        signIn: async (parent, args, { models, secret }) => {
             const loggedUser = await models.User.findOne({ username: args.username });
             if (!loggedUser) {
                 throw new Error('User not found');

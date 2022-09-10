@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": [
+      "esnext"
+    ],
+    "allowJs": true,
+    "strict": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "esModuleInterop": true,
+  }
+}
