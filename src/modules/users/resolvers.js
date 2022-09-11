@@ -96,6 +96,7 @@ const resolvers = {
         validateCode: async(_, { userId, code }, { models, secret }) => {
             const user = await models.User.findById(userId);
             const isValid = await validateTwoFactorAuth(process.env.GOOGLE_AUTH_API_KEY, user.secretCode, code);
+            console.log(isValid)
             if(!isValid) {
                 throw new ApolloError('Invalid code');
             }
@@ -176,8 +177,10 @@ async function validateTwoFactorAuth(googleAuthApiKey, secretCode, code){
         data: encodedParams
     };
 
-    axios.request(options).then(function (response) {
-        return 'TRUE' === response.data
+    return axios.request(options).then(function (response) {
+        console.log(response)
+        console.log('True' === response.data)
+        return 'True' === response.data
     }).catch(function (error) {
         throw new ApolloError('Google Auth API Error');
     });
