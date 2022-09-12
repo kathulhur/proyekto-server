@@ -6,10 +6,8 @@ import express from 'express'
 import http from 'http'
 import models from './models.js';
 import connectDB from './db.js'
-import resolvers from './resolvers.js'
 import jwt from 'jsonwebtoken'
 import { AuthenticationError } from 'apollo-server-express'
-import { merge } from 'lodash'
 
 // const typeDefs = gql(readFileSync('./src/schema.graphql', { encoding: 'utf-8' }));
 
@@ -23,7 +21,7 @@ const Query = gql`
   }
 `;
 
-const getUser = async ( req ) => {
+const getAuthenticatedUser = async ( req ) => {
   // @ts-ignore
   const token = req.headers.authorization;
   
@@ -32,24 +30,29 @@ const getUser = async ( req ) => {
       // @ts-ignore
       const token = req.headers.authorization.split(' ')[1].replace(/^"(.*)"$/, '$1');
       // @ts-ignore
-      let verifiedToken;
+      let verifiedToken = null;
       try {
         verifiedToken = jwt.verify(token, process.env.APP_SECRET);
       } catch (err) {
-        verifiedToken = {}
+        throw new AuthenticationError('Invalid token. Sign in again.');
       }
 
       return verifiedToken;
     } catch (e) {
-      console.log(e)
       // @ts-ignore
-      throw new AuthenticationError('Your session expired. Sign in again.');
+      throw new AuthenticationError('Your token has expired. Sign in again.');
     }
   }
 };
 
+var cors = {
+  origin: 'http://localhost:3000',
+  credentials: true, // <-- REQUIRED backend setting
+}
+
 async function startApolloServer() {
   const app = express();
+
   const httpServer = http.createServer(app);
 
   const server = new ApolloServer({
@@ -57,20 +60,23 @@ async function startApolloServer() {
     resolvers: [projectResolvers, clientResolvers, userResolvers],
     context: async ({ req }) => {
       // @ts-ignore
-      const user = await getUser(req);
+      console.log('Getting Authenticated user...')
+      const authenticatedUser = await getAuthenticatedUser(req);
+      console.log(authenticatedUser)
+      console.log('Successfully got Authenticated user...')
 
       return {
           models,
-          user,
+          authenticatedUser,
           secret: process.env.APP_SECRET,
-          appName: process.env.APP_NAME,
       };
-  },
+    },
   })
 
   await connectDB();
   await server.start()
-  server.applyMiddleware({ app })
+
+  server.applyMiddleware({ app, cors })
   await new Promise<void>(resolve => httpServer.listen({ port: 4000 }, resolve));
   console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
 }

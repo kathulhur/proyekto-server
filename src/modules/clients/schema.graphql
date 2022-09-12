@@ -13,7 +13,7 @@ type Client {
 
 type Mutation {
     createClient(name: String!, email: String!, phone: String!): Client
-    editClient(id: ID!, name: String, email: String, phone: String): Client
+    updateClient(id: ID!, name: String, email: String, phone: String): Client
     deleteClient(id: ID!): Client
 
 }

@@ -1,54 +1,45 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { skip } from 'graphql-resolvers';
-import { ForbiddenError } from 'apollo-server-express';
 import { combineResolvers } from 'graphql-resolvers';
-
-
-const isAuthenticated = (parent, args, { user }) => {
-    return user ? skip : new ForbiddenError('Not authenticated as user.');
-}
-
+import { isAuthenticated } from '../_utils/authResolvers';
 
 const resolvers = {
     Project: {
-        client: async (project, args, { models }) => {
-            const client = await models.Client.findById(project.clientId);
+        client: async ({ clientId }, _, { models }) => {
+            const client = await models.Client.findById(clientId);
             return client;
         }
     },
     Query: {
         projects: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models, user }) => await models.Project.find({ userId: user.id })
+            async (_, __, { models, authenticatedUser }) => await models.Project.find({ userId: authenticatedUser.id })
         ),
         project: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => await models.Project.findById(args.id)
+            async (_, { id }, { models }) => await models.Project.findById(id)
         )
     },
     Mutation: {
         createProject: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models, user}) => {
+            async (_, { clientId, name, description, status }, { models, authenticatedUser }) => {
             const project = new models.Project({
-                clientId: args.clientId,
-                name: args.name,
-                description: args.description,
-                status: args.status,
-                userId: user.id
+                clientId: clientId,
+                name: name,
+                description: description,
+                status: status,
+                userId: authenticatedUser.id
             });
             await project.save();
             return project;
         }),
-        editProject: combineResolvers(
+        updateProject: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => {
-            const project = await models.Project.findByIdAndUpdate(args.id, { $set: {
-                clientId: args.clientId,
-                name: args.name,
-                description: args.description,
-                status: args.status
+            async (_, { id, clientId, name, description, status }, { models }) => {
+            const project = await models.Project.findByIdAndUpdate(id, { $set: {
+                clientId: clientId,
+                name: name,
+                description: description,
+                status: status
             }});
 
 
@@ -56,8 +47,8 @@ const resolvers = {
         }),
         deleteProject: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => {
-            const project = await models.Project.findById(args.id);
+            async (_, { id }, { models }) => {
+            const project = await models.Project.findById(id);
             await project.remove();
             return project;
         }),

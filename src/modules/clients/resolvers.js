@@ -1,52 +1,46 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { skip } from 'graphql-resolvers';
-import { ForbiddenError } from 'apollo-server-express';
 import { combineResolvers } from 'graphql-resolvers';
+import { isAuthenticated } from '../_utils/authResolvers';
 
 
-const isAuthenticated = (parent, args, { user }) => {
-    return user ? skip : new ForbiddenError('Not authenticated as user.');
-}
 
 const resolvers = {
     Query: {
         clients: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models, user }) => await models.Client.find({ userId: user.id }),
+            async (_, __, { models, authenticatedUser }) => await models.Client.find({ userId: authenticatedUser.id }),
         ),
         client: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => await models.Client.findById(args.id)
+            async (_, args, { models }) => await models.Client.findById(args.id)
         ),
     },
     Mutation: {
         createClient: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models, user}) => {
+            async (parent, { name, email, phone }, { models, authenticatedUser }) => {
             const client = new models.Client({
-                name: args.name,
-                email: args.email,
-                phone: args.phone,
-                userId: user.id
+                name:name,
+                email: email,
+                phone: phone,
+                userId: authenticatedUser.id
             });
             await client.save();
             return client;
         }),
-        editClient: combineResolvers(
+        updateClient: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => {
-            const client = await models.Client.findByIdAndUpdate(args.id, {
-                name: args.name,
-                email: args.email,
-                phone: args.phone
+            async (_, { id, name, email, phone }, { models }) => {
+            const client = await models.Client.findByIdAndUpdate(id, {
+                name: name,
+                email: email,
+                phone: phone
             }); 
 
             return client;
         }),
         deleteClient: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => {
+            async (_, args, { models }) => {
             const client = await models.Client.findById(args.id);
             await models.Project.deleteMany({ clientId: args.id });
             await client.remove();

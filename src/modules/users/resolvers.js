@@ -1,29 +1,19 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { skip } from 'graphql-resolvers';
-import { ApolloError, ForbiddenError } from 'apollo-server-express';
+import { ApolloError } from 'apollo-server-express';
 import { combineResolvers } from 'graphql-resolvers';
 import axios from 'axios';
+import { isAuthenticated, isAdmin } from '../_utils/authResolvers';
 
-const isAuthenticated = (parent, args, { user }) => {
-    return user ? skip : new ForbiddenError('Not authenticated as user.');
-}
-
-const isAdmin = (parent, args, { user }) => {
-    return user && user.role === 'ADMIN' ? skip : new ForbiddenError('Not authenticated as admin.');
-}
-
-
-const createToken = async (loggedUser, secret, expiresIn) => {
+const createToken = (loggedUser, secret, expiresIn) => {
     const { id, username, role } = loggedUser;
-    return await jwt.sign({ id, username, role }, secret, { expiresIn });
+    return jwt.sign({ id, username, role }, secret, { expiresIn });
 }
 
 const resolvers = {
     Query: {
-        googleAuthApiKey: () => process.env.GOOGLE_AUTH_API_KEY,
-        appName: () => process.env.APP_NAME,
         users: combineResolvers(
+            isAuthenticated,
             isAdmin,
             async (_, __, { models }) => await models.User.find(),
         ),
@@ -31,6 +21,8 @@ const resolvers = {
             isAuthenticated,
             async (_, {id}, { models }) => await models.User.findById(id)
         ),
+        getLoggedInUser:
+            async (_, __, { models, authenticatedUser }) => authenticatedUser && await models.User.findById(authenticatedUser.id),
     },
     Mutation: {
         createUser: 
@@ -55,13 +47,12 @@ const resolvers = {
                 await user.save();
                 return user;
             },
-        editUser: combineResolvers(
+        updateUser: combineResolvers(
             isAuthenticated,
-            async (parent, args, { models }) => {
+            async (_, args, { models }) => {
             const user = await models.User.findByIdAndUpdate(args.id, { $set: {
                 username: args.username,
                 password: args.password,
-                secretCode: args.secretCode,
                 twoFactorAuthEnabled: args.twoFactorAuthEnabled,
                 role: args.role,
             }}, { new: true });
@@ -75,11 +66,13 @@ const resolvers = {
             await user.remove();
             return user;
         }),
-        signIn: async (_, {username, password}, { models, secret }) => {
+        signIn: async (_, { username, password }, { models, secret }) => {
+            console.log('resolver: signIn')
             const loggedUser = await models.User.findOne({ username: username });
             if (!loggedUser) {
                 throw new Error('User not found');
             }
+
             const isValid = await bcrypt.compare(password, loggedUser.password);
             if (!isValid) {
                 throw new Error('Invalid password');
@@ -94,9 +87,9 @@ const resolvers = {
             };
         },
         validateCode: async(_, { userId, code }, { models, secret }) => {
+            console.log("resolver: validateCode")
             const user = await models.User.findById(userId);
             const isValid = await validateTwoFactorAuth(process.env.GOOGLE_AUTH_API_KEY, user.secretCode, code);
-            console.log(isValid)
             if(!isValid) {
                 throw new ApolloError('Invalid code');
             }
@@ -104,7 +97,7 @@ const resolvers = {
                 code: 200,
                 success: true,
                 message: 'Code validated successfully',
-                token: createToken(user, secret, '1hr'),
+                token: await createToken(user, secret, '1hr'),
                 user: user
             }
         }

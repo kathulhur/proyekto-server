@@ -1,14 +1,12 @@
 extend type Query {
-    login: Token,
     user(id: ID!): User,
     users: [User],
-    googleAuthApiKey: String
-    appName: String
+    getLoggedInUser: User
 }
 
 type Mutation {
     createUser(username: String!, password: String!): User
-    editUser(id: ID!, username: String, password: String, secretCode: String, twoFactorAuthEnabled: Boolean, role: Role): User
+    updateUser(id: ID!, username: String, password: String, twoFactorAuthEnabled: Boolean, role: Role): User
     deleteUser(id: ID!): User
     signIn(username: String!, password: String!): SignInResponse!
     validateCode(userId: ID!, code: String!): ValidateCodeResponse!
