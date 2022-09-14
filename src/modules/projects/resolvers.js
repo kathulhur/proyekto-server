@@ -40,7 +40,7 @@ const resolvers = {
                 name: name,
                 description: description,
                 status: status
-            }});
+            }}, { new: true });
 
 
             return project;

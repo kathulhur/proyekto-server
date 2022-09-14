@@ -34,8 +34,9 @@ const resolvers = {
                 name: name,
                 email: email,
                 phone: phone
-            }); 
-
+            },
+            { new: true }); 
+            
             return client;
         }),
         deleteClient: combineResolvers(
