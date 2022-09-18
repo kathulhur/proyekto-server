@@ -45,7 +45,7 @@ const getAuthenticatedUser = async ( req ) => {
 };
 
 var cors = {
-  origin: 'http://localhost:3000',
+  origin: 'https://proyekto.kathulhudev.me',
   credentials: true, // <-- REQUIRED backend setting
 }
 
@@ -76,7 +76,7 @@ async function startApolloServer() {
   await server.start()
 
   server.applyMiddleware({ app, cors })
-  await new Promise<void>(resolve => httpServer.listen({ port: 4000 }, resolve));
+  await new Promise<void>(resolve => httpServer.listen({ port: process.env.PORT }, resolve));
   console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
 }
 
