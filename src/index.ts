@@ -9,7 +9,6 @@ import connectDB from './db.js'
 import jwt from 'jsonwebtoken'
 import { AuthenticationError } from 'apollo-server-express'
 
-// const typeDefs = gql(readFileSync('./src/schema.graphql', { encoding: 'utf-8' }));
 
 import { clientTypeDefs, projectTypeDefs, userTypeDefs } from './modules';
 import { clientResolvers, projectResolvers, userResolvers } from './modules';
