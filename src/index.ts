@@ -45,7 +45,7 @@ const getAuthenticatedUser = async ( req ) => {
 };
 
 var cors = {
-  origin: ['https://proyekto.kathulhudev.me', 'http://localhost:3000', 'https://proyekto-81773.web.app', 'proyekto-client.vercel.app'],
+  origin: ['https://proyekto.kathulhudev.me', 'http://localhost:3000', 'https://proyekto-81773.web.app', 'https://proyekto-client.vercel.app'],
   credentials: true, // <-- REQUIRED backend setting
 }
 
