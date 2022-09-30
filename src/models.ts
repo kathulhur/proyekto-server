@@ -1,6 +1,10 @@
-import mongoose from 'mongoose';
+import { Schema, model, } from 'mongoose';
+import { Client } from './_types/clients'
+import { ProjectDocument } from './_types/projects'
+import { UserDocument } from './_types/users';
+import { ClientDocument } from './_types/clients';
 
-const ClientSchema = new mongoose.Schema({
+const ClientSchema = new Schema<ClientDocument>({
     name: {
         type: String
     },
@@ -11,12 +15,12 @@ const ClientSchema = new mongoose.Schema({
         type: String
     },
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User'
     }
 });
 
-const ProjectSchema = new mongoose.Schema({
+const ProjectSchema = new Schema<ProjectDocument>({
     name: {
         type: String
     },
@@ -28,17 +32,17 @@ const ProjectSchema = new mongoose.Schema({
         enum: ['NEW', 'PROGRESS', 'COMPLETED']
     },
     clientId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Client'
     },
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User'
     }
     
 });
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new Schema<UserDocument>({
     username: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, required: true, enum: ['ADMIN', 'USER'], default: 'USER' },
@@ -48,9 +52,9 @@ const UserSchema = new mongoose.Schema({
 });
 
 
-const Client = mongoose.model('Client', ClientSchema);
-const Project = mongoose.model('Project', ProjectSchema);
-const User = mongoose.model('User', UserSchema);
+const Client = model<ClientDocument>('Client', ClientSchema);
+const Project = model<ProjectDocument>('Project', ProjectSchema);
+const User = model<UserDocument>('User', UserSchema);
 
 
 export default { Client, Project, User };

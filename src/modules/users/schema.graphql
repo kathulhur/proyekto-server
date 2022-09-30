@@ -2,11 +2,12 @@ extend type Query {
     user(id: ID!): User,
     users: [User],
     getLoggedInUser: User
+    usersCount: Int
 }
 
 type Mutation {
     createUser(username: String!, password: String!): User
-    updateUser(id: ID!, username: String, password: String, twoFactorAuthEnabled: Boolean, role: Role): User
+    updateUser(id: ID!, username: String!, password: String!, twoFactorAuthEnabled: Boolean, role: Role): User
     deleteUser(id: ID!): User
     signIn(username: String!, password: String!): SignInResponse!
     validateCode(userId: ID!, code: String!): ValidateCodeResponse!
@@ -31,6 +32,15 @@ enum Role {
 type Token {
     token: String!
 }
+
+
+type UserResponse {
+    user: User
+    code: Int!
+    success: Boolean!
+    message: String!
+}
+
 
 
 type SignInResponse implements MutationResponse {

@@ -6,10 +6,10 @@ extend type Query {
 
 type Project {
     id: ID!
-    clientId: ID
+    clientId: ID!
     client: Client
-    name: String
-    description: String
+    name: String!
+    description: String!
     status: Status
     userId: ID
 }
@@ -22,6 +22,6 @@ enum Status {
 
 type Mutation {
     createProject(clientId: ID!, name: String!, description: String!, status: Status!): Project
-    updateProject(id: ID!, clientId: ID, name: String, description: String, status: Status): Project
+    updateProject(id: ID!, clientId: ID, name: String!, description: String, status: Status): Project
     deleteProject(id: ID!): Project
 }

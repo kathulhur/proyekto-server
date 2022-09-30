@@ -3,70 +3,63 @@ import jwt from 'jsonwebtoken';
 import { ApolloError } from 'apollo-server-express';
 import { combineResolvers } from 'graphql-resolvers';
 import axios from 'axios';
-import { isAuthenticated, isAdmin } from '../_utils/authResolvers';
+import { DeleteUserArgs, UpdateUserArgs, User, UserArgs, SignInArgs, ValidateCodeArgs, getTwoFactorAuthQrLinkArgs, CreateUserArgs} from '../../_types/users'
+import { Context } from '../../_types/context'
 
-const createToken = (loggedUser, secret, expiresIn) => {
+const createToken = (loggedUser: User, secret: string, expiresIn: string) => {
     const { id, username, role } = loggedUser;
     return jwt.sign({ id, username, role }, secret, { expiresIn });
 }
 
 const resolvers = {
     Query: {
-        users: combineResolvers(
-            isAuthenticated,
-            isAdmin,
-            async (_, __, { models }) => await models.User.find(),
-        ),
-        user: combineResolvers(
-            isAuthenticated,
-            async (_, {id}, { models }) => await models.User.findById(id)
-        ),
+        users:
+            async (_: undefined, __: undefined, { dataSources, authenticatedUser }: Context): Promise<(User | null | undefined)[]> => {
+                return await dataSources.users.getUsers()
+            },
+        user: async (_: undefined, { id }: UserArgs, { dataSources }: Context): Promise<User | null | undefined> => {
+            return await dataSources?.users.getUser(id) 
+        },
+        usersCount: async (_: undefined, __: undefined, { dataSources }: Context): Promise<number> => {
+            return await dataSources.users.getUsersCount()
+        },
         getLoggedInUser:
-            async (_, __, { models, authenticatedUser }) => authenticatedUser && await models.User.findById(authenticatedUser.id),
+            async (_: undefined, __: undefined, { dataSources, authenticatedUser }: Context) => {
+                return authenticatedUser && await dataSources.users.getUser(authenticatedUser.id!); // This can cause bug; fix this
+            },
     },
     Mutation: {
-        createUser: 
-            async (_, { username, password }, { models }) => {
+        createUser: async (_: undefined, { username, password }: CreateUserArgs, { dataSources }: Context) => {
 
-                const hashedPassword = await bcrypt.hash(password, 10); 
-                const secretCode = await getSecretCode(process.env.GOOGLE_AUTH_API_KEY);
-                const twoFactorAuthQrLink = await getTwoFactorAuthQrLink({
-                    googleAuthApiKey: process.env.GOOGLE_AUTH_API_KEY,
-                    appName: process.env.APP_NAME,
-                    username,
-                    secretCode
-                });
-                
-                const user = new models.User({
-                    username,
-                    password: hashedPassword,
-                    secretCode,
-                    twoFactorAuthQrLink
-                });
-                
-                await user.save();
-                return user;
-            },
-        updateUser: combineResolvers(
-            isAuthenticated,
-            async (_, args, { models }) => {
-            const user = await models.User.findByIdAndUpdate(args.id, { $set: {
-                username: args.username,
-                password: args.password,
-                twoFactorAuthEnabled: args.twoFactorAuthEnabled,
-                role: args.role,
-            }}, { new: true });
-
+            const hashedPassword = await bcrypt.hash(password, 10); 
+            const secretCode = await getSecretCode(process.env.GOOGLE_AUTH_API_KEY!);
+            const twoFactorAuthQrLink = await getTwoFactorAuthQrLink({
+                googleAuthApiKey: process.env.GOOGLE_AUTH_API_KEY!,
+                appName: process.env.APP_NAME!,
+                username,
+                secretCode
+            });
+            
+            const createUserArgs: User = {
+                username,
+                password: hashedPassword,
+                secretCode,
+                twoFactorAuthQrLink
+            };
+            
+            const newUser = await dataSources.users.createOne(createUserArgs)
+            
+            return newUser;
+        },
+        updateUser: async (_: undefined, updateUserArgs: UpdateUserArgs, { dataSources }: Context) => {
+            const updatedUser = await dataSources.users.updateOne(updateUserArgs)
+            return updatedUser;
+        },
+        deleteUser: async (_: undefined, {id}: DeleteUserArgs, { dataSources }: Context) => {
+            const user = await dataSources.users.deleteOne(id)
             return user;
-        }),
-        deleteUser: combineResolvers(
-            isAuthenticated,
-            async (_, {id}, { models }) => {
-            const user = await models.User.findById(id);
-            await user.remove();
-            return user;
-        }),
-        signIn: async (_, { username, password }, { models, secret }) => {
+        },
+        signIn: async (_: undefined, { username, password }: SignInArgs, { models, secret }: Context) => {
             console.log('resolver: signIn')
             const loggedUser = await models.User.findOne({ username: username });
             if (!loggedUser) {
@@ -82,14 +75,14 @@ const resolvers = {
                 code: 200,
                 success: true,
                 message: 'User logged in successfully',
-                token: createToken(loggedUser, secret, '1hr'),
+                token: createToken(loggedUser, secret!, '1hr'),
                 user: loggedUser
             };
         },
-        validateCode: async(_, { userId, code }, { models, secret }) => {
+        validateCode: async(_: undefined, { userId, code }: ValidateCodeArgs, { models, secret }: Context) => {
             console.log("resolver: validateCode")
             const user = await models.User.findById(userId);
-            const isValid = await validateTwoFactorAuth(process.env.GOOGLE_AUTH_API_KEY, user.secretCode, code);
+            const isValid = await validateTwoFactorAuth(process.env.GOOGLE_AUTH_API_KEY!, user.secretCode, code);
             if(!isValid) {
                 throw new ApolloError('Invalid code');
             }
@@ -97,7 +90,7 @@ const resolvers = {
                 code: 200,
                 success: true,
                 message: 'Code validated successfully',
-                token: await createToken(user, secret, '1hr'),
+                token: await createToken(user, secret!, '1hr'),
                 user: user
             }
         }
@@ -105,8 +98,7 @@ const resolvers = {
 };
 
 
-
-async function getSecretCode(googleAuthApiKey) {
+async function getSecretCode(googleAuthApiKey: string) {
     const options = {
         method: 'POST',
         url: 'https://google-authenticator.p.rapidapi.com/new_v2/',
@@ -115,18 +107,16 @@ async function getSecretCode(googleAuthApiKey) {
             'X-RapidAPI-Host': 'google-authenticator.p.rapidapi.com'
         }
     };
-    
-    let response = '';
 
     try {
-        response = await axios.request(options)
+        const { data } = await axios.request(options)
+        return data
     } catch (err) {
         throw new ApolloError('Error Generating Secret Code');
     }
-    return response.data
 }
 
-async function getTwoFactorAuthQrLink({googleAuthApiKey, appName, username, secretCode}) {
+async function getTwoFactorAuthQrLink({googleAuthApiKey, appName, username, secretCode}: getTwoFactorAuthQrLinkArgs) {
     const encodedParams = new URLSearchParams();
     encodedParams.append("secret", secretCode);
     encodedParams.append("account", username);
@@ -144,16 +134,15 @@ async function getTwoFactorAuthQrLink({googleAuthApiKey, appName, username, secr
         data: encodedParams
     }
 
-    let response = '';
     try {
-        response = await axios.request(options)
+        const { data } = await axios.request(options)
+        return data
     } catch (err) {
         throw new ApolloError('Error Generating QR Code Link');
     }
-    return response.data
 }
 
-async function validateTwoFactorAuth(googleAuthApiKey, secretCode, code){
+async function validateTwoFactorAuth(googleAuthApiKey: string, secretCode: string, code: string){
     const encodedParams = new URLSearchParams();
     encodedParams.append("secret", secretCode);
     encodedParams.append("code", code);
