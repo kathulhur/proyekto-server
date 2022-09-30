@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { Document } from 'mongoose';
-
+import { JwtPayload } from 'jsonwebtoken'
 
 export interface User {
     id?: ObjectId;
@@ -11,6 +11,9 @@ export interface User {
     twoFactorAuthEnabled?: boolean;
     twoFactorAuthQrLink?: string;
 }
+
+
+export type AuthPayload = User & JwtPayload
 
 export type UserDocument = User & Document
 

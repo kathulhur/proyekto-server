@@ -1,9 +1,9 @@
 import { DataSources } from "./common"
-import { User } from "./users"
+import { AuthPayload } from "./users"
 
 export interface Context{
     dataSources: DataSources
-    models?: any
-    authenticatedUser?: User
+    authenticatedUser?: AuthPayload | null
     secret?: string
+    models: any
 }

@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@graphql-tools/schema": "^9.0.4",
     "apollo-datasource-mongodb": "^0.5.4",
     "apollo-server-core": "^3.10.2",
     "apollo-server-express": "^3.10.2",
@@ -27,7 +28,9 @@
     "express-jwt": "^7.7.5",
     "graphql": "^16.5.0",
     "graphql-import-node": "^0.0.5",
+    "graphql-middleware": "^6.1.32",
     "graphql-resolvers": "^0.4.2",
+    "graphql-shield": "^7.5.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "mongoose": "^6.5.2"
@@ -35,6 +38,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
     "@types/express": "^4.17.13",
+    "@types/express-jwt": "^6.0.4",
     "@types/graphql-resolvers": "^0.3.1",
     "@types/node": "^18.7.14",
     "copyfiles": "^2.4.1",

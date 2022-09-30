@@ -1,14 +1,18 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { ApolloError } from 'apollo-server-express';
-import { combineResolvers } from 'graphql-resolvers';
 import axios from 'axios';
 import { DeleteUserArgs, UpdateUserArgs, User, UserArgs, SignInArgs, ValidateCodeArgs, getTwoFactorAuthQrLinkArgs, CreateUserArgs} from '../../_types/users'
 import { Context } from '../../_types/context'
 
 const createToken = (loggedUser: User, secret: string, expiresIn: string) => {
     const { id, username, role } = loggedUser;
-    return jwt.sign({ id, username, role }, secret, { expiresIn });
+    console.log(secret)
+    return jwt.sign(
+        { username, role }, 
+        secret, 
+        { algorithm: 'HS256', subject: id?.toString(), expiresIn }
+    )
 }
 
 const resolvers = {
@@ -23,10 +27,14 @@ const resolvers = {
         usersCount: async (_: undefined, __: undefined, { dataSources }: Context): Promise<number> => {
             return await dataSources.users.getUsersCount()
         },
-        getLoggedInUser:
-            async (_: undefined, __: undefined, { dataSources, authenticatedUser }: Context) => {
-                return authenticatedUser && await dataSources.users.getUser(authenticatedUser.id!); // This can cause bug; fix this
-            },
+        getLoggedInUser: async (_: undefined, __: undefined, { dataSources, authenticatedUser }: Context) => {
+            return authenticatedUser && await dataSources.users.getUser(authenticatedUser.id!); // This can cause bug; fix this
+        },
+        viewer: async (_: undefined, __: undefined, { dataSources, authenticatedUser}: Context) => {
+            
+            return authenticatedUser && authenticatedUser.sub && dataSources.users.getUser(authenticatedUser.sub);
+        }
+
     },
     Mutation: {
         createUser: async (_: undefined, { username, password }: CreateUserArgs, { dataSources }: Context) => {
@@ -60,7 +68,6 @@ const resolvers = {
             return user;
         },
         signIn: async (_: undefined, { username, password }: SignInArgs, { models, secret }: Context) => {
-            console.log('resolver: signIn')
             const loggedUser = await models.User.findOne({ username: username });
             if (!loggedUser) {
                 throw new Error('User not found');
