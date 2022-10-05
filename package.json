@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {"node": "14.20.0"},
   "scripts": {
     "build": "rm -rf && tsc --build tsconfig.json && copyfiles -u 1 **/*.graphql dist",
     "postinstall": "tsc && copyfiles -u 1 **/*.graphql dist",
