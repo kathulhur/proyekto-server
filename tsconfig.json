@@ -7,7 +7,7 @@
       "esnext"
     ],
     "allowJs": true,
-    "strict": true,
+    "strict": false,
     "rootDir": "src",
     "outDir": "dist",
     "esModuleInterop": true,
