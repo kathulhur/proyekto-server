@@ -14,6 +14,7 @@ export default class Users extends MongoDataSource<UserDocument, Context> {
 
         try {
             const user = await this.findOneById(userId)
+            
             return user
         } catch (err) {
             console.log('Error at: dataSource:getUser')

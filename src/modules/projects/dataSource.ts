@@ -21,7 +21,7 @@ export default class Projects extends MongoDataSource<ProjectDocument, Context> 
 
     async getProjects() {
         try {
-            const projectIds = (await this.model.find({ deleted: { $ne: true }})).map((project: ProjectDocument): ObjectId => {
+            const projectIds = (await this.model.find({ userId: this.context.authenticatedUser?.sub, deleted: { $ne: true }})).map((project: ProjectDocument): ObjectId => {
                 return project.id
             })
 
@@ -36,6 +36,7 @@ export default class Projects extends MongoDataSource<ProjectDocument, Context> 
     async createOne(createProjectArgs: CreateProjectArgs) {
         try {
             const newProject = new this.model({
+                userId: this.context.authenticatedUser?.sub,
                 ...createProjectArgs,
             });
 

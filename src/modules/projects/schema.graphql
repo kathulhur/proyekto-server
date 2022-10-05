@@ -22,6 +22,6 @@ enum Status {
 
 type Mutation {
     createProject(clientId: ID!, name: String!, description: String!, status: Status!): Project
-    updateProject(id: ID!, clientId: ID, name: String!, description: String, status: Status): Project
+    updateProject(id: ID!, clientId: ID, name: String, description: String, status: Status): Project
     deleteProject(id: ID!): Project
 }

@@ -8,7 +8,7 @@ extend type Query {
 
 type Mutation {
     createUser(username: String!, password: String!): User
-    updateUser(id: ID!, username: String!, password: String!, twoFactorAuthEnabled: Boolean, role: Role): User
+    updateUser(id: ID!, username: String, password: String, twoFactorAuthEnabled: Boolean, role: Role): User
     deleteUser(id: ID!): User
     signIn(username: String!, password: String!): SignInResponse!
     validateCode(userId: ID!, code: String!): ValidateCodeResponse!

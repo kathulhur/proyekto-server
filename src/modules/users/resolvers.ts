@@ -7,7 +7,6 @@ import { Context } from '../../_types/context'
 
 const createToken = (loggedUser: User, secret: string, expiresIn: string) => {
     const { id, username, role } = loggedUser;
-    console.log(secret)
     return jwt.sign(
         { username, role }, 
         secret, 
@@ -26,9 +25,6 @@ const resolvers = {
         },
         usersCount: async (_: undefined, __: undefined, { dataSources }: Context): Promise<number> => {
             return await dataSources.users.getUsersCount()
-        },
-        getLoggedInUser: async (_: undefined, __: undefined, { dataSources, authenticatedUser }: Context) => {
-            return authenticatedUser && await dataSources.users.getUser(authenticatedUser.id!); // This can cause bug; fix this
         },
         viewer: async (_: undefined, __: undefined, { dataSources, authenticatedUser}: Context) => {
             

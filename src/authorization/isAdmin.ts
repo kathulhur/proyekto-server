@@ -5,6 +5,5 @@ import { Context } from "../_types/context"
 
 
 export const isAdmin = rule()(async (parent:any, args: any, { authenticatedUser }: Context) => {
-    console.log(authenticatedUser)
     return authenticatedUser && authenticatedUser.role === 'ADMIN' ? true : new ForbiddenError('Not authenticated as Admin')
 })

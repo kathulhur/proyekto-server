@@ -1,8 +1,8 @@
-import { ApolloServer, gql } from 'apollo-server-express'
+import { ApolloError, ApolloServer, AuthenticationError, gql } from 'apollo-server-express'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import * as dotenv from 'dotenv'
 dotenv.config() 
-import express from 'express'
+import express, { NextFunction, Request, RequestHandler, Response } from 'express'
 import http from 'http'
 import models from './models';
 import connectDB from './db'
@@ -28,7 +28,7 @@ var cors = {
 
 async function startApolloServer() {
   const app = express();
-  
+  app.get('/', (req, res) => res.send("OK"))
   app.use(
     expressjwt({
       secret: "ELSJFX5MHABSAONN",
@@ -36,6 +36,14 @@ async function startApolloServer() {
       credentialsRequired: false
     })
   )
+  // TODO: Search how to properly handle expired token
+  app.use((err: Error, req: Request, res: Response, next: NextFunction): any => {
+    if (err.name === "UnauthorizedError") {
+      throw new AuthenticationError('Error')
+    } else {
+      next(err);
+    }
+  });
   const httpServer = http.createServer(app);
   const typeDefs = [clientTypeDefs, userTypeDefs, projectTypeDefs, Query]
   const resolvers = [projectResolvers, clientResolvers, userResolvers]
@@ -44,7 +52,6 @@ async function startApolloServer() {
     schema: applyMiddleware(schema, authorization),
     context: async ({ req }: { req: JWTRequest<User> }) => {
       const authenticatedUser = req.auth || null
-      console.log(authenticatedUser)
       const context = {
         authenticatedUser,
         secret: process.env.APP_SECRET,

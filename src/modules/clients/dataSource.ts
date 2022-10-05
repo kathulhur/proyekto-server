@@ -21,7 +21,7 @@ export default class Clients extends MongoDataSource<ClientDocument, Context> {
 
     async getClients() {
         try {
-            const clientIds = (await this.model.find({ deleted: { $ne: true }})).map((client: ClientDocument): ObjectId => {
+            const clientIds = (await this.model.find({ userId: this.context.authenticatedUser?.sub, deleted: { $ne: true }})).map((client: ClientDocument): ObjectId => {
                 return client.id
             })
 
@@ -36,6 +36,7 @@ export default class Clients extends MongoDataSource<ClientDocument, Context> {
     async createOne(createClientArgs: CreateClientArgs) {
         try {
             const newClient = new this.model({
+                userId: this.context.authenticatedUser?.sub,
                 ...createClientArgs,
             });
 
